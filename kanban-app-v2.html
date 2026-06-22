@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مدیریت پروژه‌ها و وظایف کانبان</title>
+<style>
+:root{
+  color-scheme: light dark;
+  --bg:#f7f7f5; --bg-soft:#efeeec; --surface:#ffffff; --surface-hover:#f3f2f0;
+  --text:#1f1f1e; --text-soft:rgba(0,0,0,.55); --text-faint:rgba(0,0,0,.32);
+  --border:rgba(0,0,0,.1); --border-soft:rgba(0,0,0,.06);
+  --shadow:0 .7px 1.5px rgba(0,0,0,.02),0 3px 9px rgba(0,0,0,.05);
+  --blue:#2f81e0; --blue-bg:#eef5fd; --green:#3aa675; --green-bg:#ecf7f1;
+  --orange:#df8a3b; --orange-bg:#fcf4ec; --red:#e0584c; --red-bg:#fdeeec;
+  --purple:#9166c4; --purple-bg:#f4eefb; --gray-bg:#f2f1ef;
+  --radius:10px;
+  --c1:#5E9FE8; --c2:#EAC26B; --c3:#72BC8F; --c4:#BF8EDA; --c5:#DE9255; --c6:#DF84A8; --c7:#4FB9C9; --c8:#E97366;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#1a1a19; --bg-soft:#1f1f1e; --surface:#262625; --surface-hover:#323231;
+    --text:#f3f3f1; --text-soft:rgba(255,255,255,.55); --text-faint:rgba(255,255,255,.32);
+    --border:rgba(255,255,255,.16); --border-soft:rgba(255,255,255,.09);
+    --shadow:0 .7px 1.5px rgba(0,0,0,.2),0 3px 9px rgba(0,0,0,.35);
+    --blue:#62aef0; --blue-bg:rgba(98,174,240,.14); --green:#5cc596; --green-bg:rgba(92,197,150,.14);
+    --orange:#f0a45c; --orange-bg:rgba(240,164,92,.14); --red:#f0766b; --red-bg:rgba(240,118,107,.14);
+    --purple:#b48ce0; --purple-bg:rgba(180,140,224,.14); --gray-bg:#323231;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  background:var(--bg); color:var(--text); overflow:hidden;
+  font-family:Vazirmatn,Tahoma,"Segoe UI",ui-sans-serif,system-ui,"Segoe UI Emoji",sans-serif;
+  font-size:15px; line-height:1.6; display:flex; flex-direction:column; height:100vh;
+}
+button{font:inherit;cursor:pointer;border:1px solid transparent;border-radius:8px;padding:8px 14px;
+  font-size:13.5px;font-weight:600;background:var(--blue);color:#fff;display:inline-flex;align-items:center;gap:6px;
+  transition:background .15s,transform .05s}
+button:hover{background:color-mix(in srgb,var(--blue) 84%,black)}
+button:active{transform:scale(.97)}
+button.ghost{background:transparent;color:var(--text);border-color:var(--border)}
+button.ghost:hover{background:var(--surface-hover)}
+button.danger{background:var(--red)}
+button.danger:hover{background:color-mix(in srgb,var(--red) 84%,black)}
+button.sm{padding:4px 10px;font-size:12px}
+input,select,textarea{font:inherit;font-size:14px;color:var(--text);background:var(--surface);
+  border:1px solid var(--border);border-radius:8px;padding:8px 11px;width:100%;transition:border-color .15s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-bg)}
+textarea{resize:vertical;min-height:70px}
+label{display:block;font-size:12.5px;font-weight:700;margin-bottom:5px;color:var(--text-soft)}
+h1,h2,h3,h4{margin:0}
+
+/* Topbar */
+.topbar{display:flex;align-items:center;gap:14px;padding:0 22px;height:56px;flex-shrink:0;
+  border-bottom:1px solid var(--border-soft);background:var(--surface)}
+.brand{display:flex;align-items:center;gap:9px;font-size:16px;font-weight:800}
+.brand .logo{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--blue),var(--purple));
+  display:grid;place-items:center;color:#fff;font-size:16px}
+.spacer{flex:1}
+.clock{display:flex;flex-direction:column;align-items:flex-end;font-size:12px;line-height:1.4}
+.clock .h{font-weight:700;color:var(--text)}
+.clock .g{color:var(--text-faint)}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;padding:10px 22px 0;flex-shrink:0;background:var(--surface);
+  border-bottom:1px solid var(--border-soft)}
+.tab{padding:9px 16px;border-radius:8px 8px 0 0;font-weight:700;font-size:14px;color:var(--text-soft);
+  cursor:pointer;border:none;background:transparent;position:relative;bottom:-1px;border-bottom:2px solid transparent}
+.tab:hover{color:var(--text);background:var(--surface-hover)}
+.tab.active{color:var(--blue);border-bottom-color:var(--blue)}
+
+/* Main */
+.main{flex:1;overflow:auto;padding:22px}
+.view{display:none}
+.view.active{display:block}
+.view-head{display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.view-head h2{font-size:21px;font-weight:800}
+.view-head .desc{color:var(--text-soft);font-size:13px}
+.filters{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.filters select,.filters input{width:auto;min-width:150px}
+
+/* Board */
+.board{display:flex;gap:16px;align-items:flex-start;overflow-x:auto;padding-bottom:10px}
+.column{flex:1;min-width:270px;background:var(--bg-soft);border-radius:var(--radius);
+  border:1px solid var(--border-soft);display:flex;flex-direction:column;max-height:calc(100vh - 230px)}
+.col-head{display:flex;align-items:center;gap:8px;padding:12px 13px;flex-shrink:0;
+  border-bottom:1px solid var(--border-soft)}
+.col-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.col-title{font-weight:700;font-size:13.5px}
+.col-count{margin-inline-start:auto;font-size:12px;font-weight:700;color:var(--text-faint);
+  background:var(--gray-bg);min-width:22px;height:22px;border-radius:11px;display:grid;place-items:center;padding:0 6px}
+.col-body{padding:10px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;flex:1;min-height:60px}
+.col-body.drag-over{background:var(--blue-bg);border-radius:8px}
+
+/* Card */
+.card{background:var(--surface);border:1px solid var(--border-soft);border-radius:9px;padding:12px;
+  box-shadow:var(--shadow);cursor:grab;transition:box-shadow .15s,transform .05s}
+.card:hover{box-shadow:0 2px 6px rgba(0,0,0,.1)}
+.card.dragging{opacity:.5}
+.card .ttl{font-weight:700;font-size:14px;margin-bottom:6px}
+.card .meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px}
+.card .pr-tag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;background:var(--purple-bg);color:var(--purple)}
+.badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px}
+.badge.overdue{background:var(--red-bg);color:var(--red)}
+.badge.soon{background:var(--orange-bg);color:var(--orange)}
+.badge.ok{background:var(--green-bg);color:var(--green)}
+.dates{font-size:11.5px;color:var(--text-soft);margin-top:8px;line-height:1.7}
+.dates .lbl{color:var(--text-faint)}
+.avatars{display:flex;margin-inline-start:auto}
+.avatar{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:800;
+  color:#fff;border:2px solid var(--surface);margin-inline-start:-8px}
+.avatar:first-child{margin-inline-start:0}
+.meter{height:7px;border-radius:999px;background:var(--gray-bg);overflow:hidden;margin-top:9px;
+  box-shadow:inset 0 0 0 1px var(--border-soft)}
+.meter>i{display:block;height:100%;border-radius:999px;background:var(--blue)}
+.meter-row{display:flex;justify-content:space-between;font-size:11px;color:var(--text-soft);margin-top:6px;font-weight:600}
+.add-card{margin:0 10px 12px;background:transparent;color:var(--text-soft);border:1px dashed var(--border);
+  width:calc(100% - 20px);justify-content:center}
+.add-card:hover{background:var(--surface-hover);color:var(--text)}
+
+/* Experts */
+.expert-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.expert-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:var(--radius);
+  padding:16px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:6px}
+.expert-card .top{display:flex;align-items:center;gap:11px}
+.expert-card .big-av{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:15px}
+.expert-card .role{font-size:12px;color:var(--text-soft)}
+.expert-card .stats{display:flex;gap:14px;margin-top:8px;font-size:12px;color:var(--text-soft)}
+.expert-card .stats b{display:block;font-size:18px;color:var(--text);font-weight:800}
+.row-actions{display:flex;gap:6px;margin-top:10px}
+
+/* Dashboard */
+.dash-section{background:var(--surface);border:1px solid var(--border-soft);border-radius:var(--radius);
+  padding:20px;box-shadow:var(--shadow);margin-bottom:20px}
+.dash-section h3{font-size:16px;font-weight:800;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.dash-section .sub{color:var(--text-soft);font-size:12.5px;margin-bottom:16px}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px}
+.stat{padding:14px;border:1px solid var(--border-soft);border-radius:10px;background:var(--bg-soft)}
+.stat .lab{font-size:12px;color:var(--text-soft);font-weight:700;margin-bottom:4px}
+.stat .val{font-size:26px;font-weight:800;letter-spacing:-.02em}
+.stat .cap{font-size:11.5px;color:var(--text-faint);margin-top:3px}
+.bar-chart{display:flex;flex-direction:column;gap:12px}
+.bar{display:grid;grid-template-columns:130px 1fr 50px;align-items:center;gap:10px}
+.bar .name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar .track{height:14px;background:var(--gray-bg);border-radius:999px;overflow:hidden;box-shadow:inset 0 0 0 1px var(--border-soft)}
+.bar .track>i{display:block;height:100%;border-radius:999px}
+.bar .pct{font-size:12.5px;font-weight:700;text-align:start;font-variant-numeric:tabular-nums}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:6px}
+.legend span{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text-soft)}
+.dot{width:11px;height:11px;border-radius:3px}
+.pie-wrap{display:flex;align-items:center;gap:26px;flex-wrap:wrap}
+.pie{width:150px;height:150px;border-radius:50%;flex-shrink:0}
+.empty{text-align:center;color:var(--text-faint);padding:40px 10px;font-size:14px}
+
+/* Modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;
+  z-index:50;padding:20px}
+.modal-bg.open{display:flex}
+.modal{background:var(--surface);border-radius:14px;box-shadow:0 16px 50px rgba(0,0,0,.3);
+  width:100%;max-width:540px;max-height:90vh;overflow:auto}
+.modal-head{display:flex;align-items:center;padding:18px 22px;border-bottom:1px solid var(--border-soft)}
+.modal-head h3{font-size:17px;font-weight:800}
+.modal-head .x{margin-inline-start:auto;background:transparent;color:var(--text-soft);padding:4px 9px}
+.modal-head .x:hover{background:var(--surface-hover)}
+.modal-body{padding:22px;display:flex;flex-direction:column;gap:15px}
+.modal-foot{padding:16px 22px;border-top:1px solid var(--border-soft);display:flex;gap:10px;justify-content:flex-start}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:6px 12px;border-radius:999px;border:1px solid var(--border);font-size:12.5px;font-weight:600;
+  cursor:pointer;color:var(--text-soft);background:var(--surface);user-select:none;display:flex;align-items:center;gap:6px}
+.chip:hover{background:var(--surface-hover)}
+.chip.sel{background:var(--blue);color:#fff;border-color:var(--blue)}
+.chip .mini-av{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font-size:9px;font-weight:800;color:#fff}
+.range-row{display:flex;align-items:center;gap:12px}
+.range-row input[type=range]{flex:1;accent-color:var(--blue)}
+.range-val{font-weight:800;font-size:15px;min-width:46px;text-align:center}
+.hint{font-size:11.5px;color:var(--text-faint);margin-top:2px}
+.empty-mini{color:var(--text-faint);font-size:12.5px}
+.toolbar-spacer{flex:1}
+@media(max-width:640px){.field-row{grid-template-columns:1fr}.bar{grid-template-columns:90px 1fr 44px}}
+.datefield{display:flex;flex-direction:column;gap:7px}
+.cal-toggle{display:inline-flex;background:var(--gray-bg);border-radius:8px;padding:3px;gap:3px;width:fit-content}
+.cal-btn{background:transparent;color:var(--text-soft);padding:4px 12px;font-size:12px;border-radius:6px;font-weight:700}
+.cal-btn:hover{background:var(--surface-hover);color:var(--text)}
+.cal-btn.active{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
+.j-row{display:grid;grid-template-columns:1fr 1.25fr .8fr;gap:6px}
+.j-row select{padding:7px 8px}
+.cal-pane input[type=date]{width:100%}
+.pr-tag.indep{background:var(--gray-bg);color:var(--text-soft)}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="brand"><span class="logo">▦</span> کانبان پروژه‌ها</div>
+  <div class="spacer"></div>
+  <div class="clock"><span class="h" id="clockH"></span><span class="g" id="clockG"></span></div>
+  <button class="ghost sm" id="btnExport">⬇ خروجی JSON</button>
+  <button class="ghost sm" id="btnImport">⬆ ورود JSON</button>
+  <input type="file" id="fileInput" accept="application/json" style="display:none">
+</div>
+
+<div class="tabs">
+  <button class="tab active" data-view="projects">📁 پروژه‌ها</button>
+  <button class="tab" data-view="tasks">✅ وظایف</button>
+  <button class="tab" data-view="experts">👥 کارشناسان دفتر</button>
+  <button class="tab" data-view="dashboard">📊 داشبورد</button>
+</div>
+
+<div class="main">
+  <!-- PROJECTS -->
+  <div class="view active" id="view-projects">
+    <div class="view-head">
+      <h2>پروژه‌ها</h2>
+      <span class="desc">مدیریت و پیگیری پروژه‌ها در قالب برد کانبان</span>
+      <div class="toolbar-spacer" style="flex:1"></div>
+      <div class="filters">
+        <select id="projExpertFilter"><option value="">همه کارشناسان</option></select>
+      </div>
+      <button id="btnNewProject">+ پروژه جدید</button>
+    </div>
+    <div class="board" id="projectsBoard"></div>
+  </div>
+
+  <!-- TASKS -->
+  <div class="view" id="view-tasks">
+    <div class="view-head">
+      <h2>وظایف</h2>
+      <span class="desc">وظایف را بکشید و بین ستون‌ها جابه‌جا کنید</span>
+      <div class="toolbar-spacer" style="flex:1"></div>
+      <div class="filters">
+        <select id="taskProjFilter"><option value="">همه پروژه‌ها</option></select>
+        <select id="taskExpertFilter"><option value="">همه کارشناسان</option></select>
+      </div>
+      <button id="btnNewTask">+ وظیفه جدید</button>
+    </div>
+    <div class="board" id="tasksBoard"></div>
+  </div>
+
+  <!-- EXPERTS -->
+  <div class="view" id="view-experts">
+    <div class="view-head">
+      <h2>کارشناسان دفتر</h2>
+      <span class="desc">افرادی که پروژه‌ها و وظایف به آن‌ها واگذار می‌شود</span>
+      <div class="toolbar-spacer" style="flex:1"></div>
+      <button id="btnNewExpert">+ کارشناس جدید</button>
+    </div>
+    <div class="expert-grid" id="expertGrid"></div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="view" id="view-dashboard">
+    <div class="view-head"><h2>داشبورد</h2><span class="desc">نمای کلی پیشرفت وظایف، پروژه‌ها و کارشناسان</span></div>
+    <div class="dash-section" id="dashTasks"></div>
+    <div class="dash-section" id="dashProjects"></div>
+    <div class="dash-section" id="dashExperts"></div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <div class="modal-head"><h3 id="modalTitle"></h3><button class="x" id="modalClose">✕</button></div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot" id="modalFoot"></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ============ STATE ============ */
+const LS_KEY = "kanbanProjectApp_v1";
+const AVATAR_COLORS = ["#5E9FE8","#72BC8F","#DE9255","#BF8EDA","#DF84A8","#4FB9C9","#E97366","#EAC26B"];
+
+const TASK_COLS = [
+  {id:"todo", title:"در انتظار", color:"#9aa0a6"},
+  {id:"in_progress", title:"در حال انجام", color:"#2f81e0"},
+  {id:"review", title:"بازبینی", color:"#df8a3b"},
+  {id:"done", title:"انجام شده", color:"#3aa675"},
+];
+const PROJ_COLS = [
+  {id:"planning", title:"برنامه‌ریزی", color:"#9aa0a6"},
+  {id:"active", title:"در حال اجرا", color:"#2f81e0"},
+  {id:"on_hold", title:"متوقف شده", color:"#df8a3b"},
+  {id:"completed", title:"تکمیل شده", color:"#3aa675"},
+];
+
+let state = load();
+
+function load(){
+  try{ const s = JSON.parse(localStorage.getItem(LS_KEY)); if(s && s.experts) return s; }catch(e){}
+  return seed();
+}
+function save(){ localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+
+function seed(){
+  const e1=uid(),e2=uid(),e3=uid();
+  const p1=uid(),p2=uid();
+  const today=new Date();
+  const iso=(d)=>{const x=new Date(today);x.setDate(x.getDate()+d);return x.toISOString().slice(0,10);};
+  return {
+    experts:[
+      {id:e1,name:"زهرا محمدی",role:"کارشناس مالی",color:AVATAR_COLORS[0]},
+      {id:e2,name:"علی رضایی",role:"کارشناس فنی",color:AVATAR_COLORS[1]},
+      {id:e3,name:"سارا کریمی",role:"کارشناس اداری",color:AVATAR_COLORS[2]},
+    ],
+    projects:[
+      {id:p1,name:"سامانه بایگانی الکترونیک",desc:"پیاده‌سازی سیستم بایگانی اسناد دفتر",status:"active",experts:[e1,e2],start:iso(-20),due:iso(25)},
+      {id:p2,name:"بازطراحی فرآیند پذیرش",desc:"بهبود گردش‌کار پذیرش ارباب‌رجوع",status:"planning",experts:[e3],start:iso(-3),due:iso(40)},
+    ],
+    tasks:[
+      {id:uid(),title:"تهیه فهرست اسناد",desc:"جمع‌آوری و دسته‌بندی اسناد موجود",project:p1,status:"done",experts:[e1],start:iso(-20),due:iso(-8),progress:100},
+      {id:uid(),title:"اسکن و بارگذاری اسناد",desc:"دیجیتالی‌سازی اسناد کاغذی",project:p1,status:"in_progress",experts:[e2,e1],start:iso(-7),due:iso(6),progress:55},
+      {id:uid(),title:"تست نهایی سامانه",desc:"بررسی عملکرد و رفع خطا",project:p1,status:"todo",experts:[e2],start:iso(2),due:iso(20),progress:0},
+      {id:uid(),title:"مستندسازی فرآیند فعلی",desc:"ثبت گام‌های موجود پذیرش",project:p2,status:"review",experts:[e3],start:iso(-3),due:iso(4),progress:80},
+    ],
+  };
+}
+
+/* ============ DATE HELPERS (Hijri/Jalali + Gregorian, from local OS time) ============ */
+const jf = new Intl.DateTimeFormat("fa-IR-u-ca-persian",{year:"numeric",month:"2-digit",day:"2-digit"});
+const jfLong = new Intl.DateTimeFormat("fa-IR-u-ca-persian",{weekday:"long",year:"numeric",month:"long",day:"numeric"});
+const gf = new Intl.DateTimeFormat("fa-IR-u-ca-gregory",{year:"numeric",month:"2-digit",day:"2-digit"});
+const tf = new Intl.DateTimeFormat("fa-IR",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+function parseISO(s){ if(!s) return null; const d=new Date(s+"T00:00:00"); return isNaN(d)?null:d; }
+function jalali(s){ const d=parseISO(s); return d?jf.format(d):"—"; }
+function greg(s){ const d=parseISO(s); return d?gf.format(d):"—"; }
+function startOfToday(){ const d=new Date(); d.setHours(0,0,0,0); return d; }
+function daysBetween(aISO,bISO){ const a=parseISO(aISO),b=parseISO(bISO); if(!a||!b) return null; return Math.round((b-a)/86400000); }
+function daysLeft(dueISO){ const due=parseISO(dueISO); if(!due) return null; return Math.round((due-startOfToday())/86400000); }
+function timeProgress(startISO,dueISO){ // % of elapsed duration based on local today
+  const s=parseISO(startISO), e=parseISO(dueISO); if(!s||!e) return null;
+  const now=startOfToday(); if(e<=s) return now>=e?100:0;
+  const p=Math.round((now-s)/(e-s)*100); return Math.max(0,Math.min(100,p));
+}
+function faNum(n){ return Number(n).toLocaleString("fa-IR"); }
+function faDigits(n){ return String(n).replace(/[0-9]/g,d=>"۰۱۲۳۴۵۶۷۸۹"[+d]); }
+
+/* ---- Jalali (Persian solar) <-> Gregorian conversion (jalaali-js algorithm) ---- */
+function jdiv(a,b){return Math.trunc(a/b);}
+function jmod(a,b){return a-Math.trunc(a/b)*b;}
+const J_BREAKS=[-61,9,38,199,426,686,756,818,1111,1181,1210,1635,2060,2097,2192,2262,2324,2394,2456,3178];
+function jalCal(jy){
+  let bl=J_BREAKS.length, gy=jy+621, leapJ=-14, jp=J_BREAKS[0], jm, jump=0, leap, leapG, march, n, i;
+  for(i=1;i<bl;i++){ jm=J_BREAKS[i]; jump=jm-jp; if(jy<jm) break; leapJ=leapJ+jdiv(jump,33)*8+jdiv(jmod(jump,33),4); jp=jm; }
+  n=jy-jp;
+  leapJ=leapJ+jdiv(n,33)*8+jdiv(jmod(n,33)+3,4);
+  if(jmod(jump,33)===4 && jump-n===4) leapJ+=1;
+  leapG=jdiv(gy,4)-jdiv((jdiv(gy,100)+1)*3,4)-150;
+  march=20+leapJ-leapG;
+  if(jump-n<6) n=n-jump+jdiv(jump+4,33)*33;
+  leap=jmod(jmod(n+1,33)-1,4); if(leap===-1) leap=4;
+  return {leap:leap,gy:gy,march:march};
+}
+function g2d(gy,gm,gd){ let d=jdiv((gy+jdiv(gm-8,6)+100100)*1461,4)+jdiv(153*jmod(gm+9,12)+2,5)+gd-34840408; d=d-jdiv(jdiv(gy+100100+jdiv(gm-8,6),100)*3,4)+752; return d; }
+function d2g(jdn){ let j=4*jdn+139361631; j=j+jdiv(jdiv(4*jdn+183187720,146097)*3,4)*4-3908; let i=jdiv(jmod(j,1461),4)*5+308; let gd=jdiv(jmod(i,153),5)+1; let gm=jmod(jdiv(i,153),12)+1; let gy=jdiv(j,1461)-100100+jdiv(8-gm,6); return {gy:gy,gm:gm,gd:gd}; }
+function j2d(jy,jm,jd){ let r=jalCal(jy); return g2d(r.gy,3,r.march)+(jm-1)*31-jdiv(jm,7)*(jm-7)+jd-1; }
+function d2j(jdn){ let gy=d2g(jdn).gy, jy=gy-621, r=jalCal(jy), jdn1f=g2d(gy,3,r.march), k, jm, jd;
+  k=jdn-jdn1f;
+  if(k>=0){ if(k<=185){ jm=1+jdiv(k,31); jd=jmod(k,31)+1; return {jy:jy,jm:jm,jd:jd}; } else { k-=186; } }
+  else { jy-=1; k+=179; if(r.leap===1) k+=1; }
+  jm=7+jdiv(k,30); jd=jmod(k,30)+1; return {jy:jy,jm:jm,jd:jd};
+}
+function toJalaali(gy,gm,gd){ return d2j(g2d(gy,gm,gd)); }
+function toGregorian(jy,jm,jd){ return d2g(j2d(jy,jm,jd)); }
+function isLeapJalaali(jy){ return jalCal(jy).leap===0; }
+function jalaaliMonthLength(jy,jm){ if(jm<=6) return 31; if(jm<=11) return 30; return isLeapJalaali(jy)?30:29; }
+const J_MONTHS=["فروردین","اردیبهشت","خرداد","تیر","مرداد","شهریور","مهر","آبان","آذر","دی","بهمن","اسفند"];
+
+/* ---- Dual-calendar date field (default Jalali, switch to Gregorian) ---- */
+function dateFieldHTML(pfx, iso){
+  iso = iso || new Date().toISOString().slice(0,10);
+  return `<div class="datefield" data-pfx="${pfx}" data-iso="${iso}">
+    <div class="cal-toggle"><button type="button" class="cal-btn active" data-cal="j">شمسی</button><button type="button" class="cal-btn" data-cal="g">میلادی</button></div>
+    <div class="cal-pane" data-pane="j"></div>
+    <div class="cal-pane" data-pane="g" style="display:none"><input type="date" data-greg></div>
+    <div class="hint" data-hint></div></div>`;
+}
+function wireDateField(pfx){
+  const root=document.querySelector('.datefield[data-pfx="'+pfx+'"]'); if(!root) return;
+  const jpane=root.querySelector('[data-pane="j"]'), gInput=root.querySelector('[data-greg]'), hint=root.querySelector('[data-hint]');
+  let y=""; for(let i=1380;i<=1440;i++) y+='<option value="'+i+'">'+faDigits(i)+'</option>';
+  let m=""; J_MONTHS.forEach((mo,i)=>m+='<option value="'+(i+1)+'">'+mo+'</option>');
+  jpane.innerHTML='<div class="j-row"><select class="j-y">'+y+'</select><select class="j-m">'+m+'</select><select class="j-d"></select></div>';
+  const ySel=jpane.querySelector('.j-y'), mSel=jpane.querySelector('.j-m'), dSel=jpane.querySelector('.j-d');
+  function populateDays(){ const jy=+ySel.value, jm=+mSel.value, len=jalaaliMonthLength(jy,jm), cur=+dSel.value||1;
+    dSel.innerHTML=""; for(let i=1;i<=len;i++){ const o=document.createElement('option'); o.value=i; o.textContent=faDigits(i); dSel.appendChild(o);} dSel.value=Math.min(cur,len); }
+  function updateHint(){ const v=root.dataset.iso; hint.textContent="شمسی: "+jalali(v)+" • میلادی: "+greg(v); }
+  function setFromISO(v){ root.dataset.iso=v; gInput.value=v; const d=new Date(v+"T00:00:00"); const j=toJalaali(d.getFullYear(),d.getMonth()+1,d.getDate()); ySel.value=j.jy; mSel.value=j.jm; populateDays(); dSel.value=j.jd; updateHint(); }
+  function commitJalali(){ const jy=+ySel.value, jm=+mSel.value, prev=+dSel.value; populateDays(); const jd=Math.min(prev||1, jalaaliMonthLength(jy,jm)); dSel.value=jd; const g=toGregorian(jy,jm,jd); const v=g.gy+"-"+String(g.gm).padStart(2,"0")+"-"+String(g.gd).padStart(2,"0"); root.dataset.iso=v; gInput.value=v; updateHint(); }
+  setFromISO(root.dataset.iso);
+  ySel.addEventListener("change",commitJalali); mSel.addEventListener("change",commitJalali); dSel.addEventListener("change",commitJalali);
+  gInput.addEventListener("change",()=>{ if(gInput.value) setFromISO(gInput.value); });
+  root.querySelectorAll(".cal-btn").forEach(b=>b.addEventListener("click",()=>{ root.querySelectorAll(".cal-btn").forEach(x=>x.classList.remove("active")); b.classList.add("active"); const cal=b.dataset.cal; root.querySelector('[data-pane="j"]').style.display=cal==="j"?"":"none"; root.querySelector('[data-pane="g"]').style.display=cal==="g"?"":"none"; }));
+}
+function getDateValue(pfx){ const root=document.querySelector('.datefield[data-pfx="'+pfx+'"]'); return root?root.dataset.iso:""; }
+
+/* ============ LOOKUPS ============ */
+const expertById = id => state.experts.find(e=>e.id===id);
+const projectById = id => state.projects.find(p=>p.id===id);
+function tasksOfProject(pid){ return state.tasks.filter(t=>t.project===pid); }
+function projectProgress(pid){ const ts=tasksOfProject(pid); if(!ts.length) return 0; return Math.round(ts.reduce((a,t)=>a+(+t.progress||0),0)/ts.length); }
+function initials(name){ const p=name.trim().split(/\s+/); return (p[0]?.[0]||"")+(p[1]?.[0]||""); }
+
+/* ============ RENDER: shared bits ============ */
+function avatarsHTML(ids){
+  if(!ids||!ids.length) return '<span class="empty-mini">بدون مسئول</span>';
+  return '<div class="avatars">'+ids.map(id=>{const e=expertById(id); if(!e)return""; 
+    return `<span class="avatar" style="background:${e.color}" title="${esc(e.name)}">${esc(initials(e.name))}</span>`;}).join("")+'</div>';
+}
+function dueBadge(dueISO,status){
+  if(status==="done"||status==="completed") return '<span class="badge ok">تکمیل</span>';
+  const dl=daysLeft(dueISO); if(dl===null) return "";
+  if(dl<0) return `<span class="badge overdue">${faNum(Math.abs(dl))} روز تأخیر</span>`;
+  if(dl<=3) return `<span class="badge soon">${faNum(dl)} روز مانده</span>`;
+  return `<span class="badge ok">${faNum(dl)} روز مانده</span>`;
+}
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+/* ============ RENDER: PROJECTS BOARD ============ */
+function renderProjects(){
+  const board=document.getElementById("projectsBoard");
+  const ef=document.getElementById("projExpertFilter").value;
+  board.innerHTML="";
+  PROJ_COLS.forEach(col=>{
+    let items=state.projects.filter(p=>p.status===col.id);
+    if(ef) items=items.filter(p=>(p.experts||[]).includes(ef));
+    const colEl=document.createElement("div"); colEl.className="column";
+    colEl.innerHTML=`<div class="col-head"><span class="col-dot" style="background:${col.color}"></span>
+      <span class="col-title">${col.title}</span><span class="col-count">${faNum(items.length)}</span></div>
+      <div class="col-body" data-col="${col.id}" data-kind="project"></div>
+      <button class="add-card" data-addproj="${col.id}">+ افزودن</button>`;
+    const body=colEl.querySelector(".col-body");
+    items.forEach(p=>{
+      const prog=projectProgress(p.id); const tcount=tasksOfProject(p.id).length;
+      const card=document.createElement("div"); card.className="card"; card.draggable=true; card.dataset.id=p.id; card.dataset.kind="project";
+      card.innerHTML=`<div class="ttl">${esc(p.name)}</div>
+        ${p.desc?`<div class="notion-muted" style="font-size:12.5px;color:var(--text-soft)">${esc(p.desc)}</div>`:""}
+        <div class="dates"><span class="lbl">شروع:</span> ${jalali(p.start)} <span class="lbl">(${greg(p.start)})</span><br>
+          <span class="lbl">پایان:</span> ${jalali(p.due)} <span class="lbl">(${greg(p.due)})</span></div>
+        <div class="meter"><i style="width:${prog}%;background:${col.color}"></i></div>
+        <div class="meter-row"><span>${faNum(tcount)} وظیفه</span><span>${faNum(prog)}٪ پیشرفت</span></div>
+        <div class="meta">${dueBadge(p.due,p.status)} ${avatarsHTML(p.experts)}</div>`;
+      card.addEventListener("click",ev=>{ if(ev.target.closest(".card")) openProjectModal(p.id); });
+      body.appendChild(card);
+    });
+    board.appendChild(colEl);
+  });
+  wireDnD(board);
+}
+
+/* ============ RENDER: TASKS BOARD ============ */
+function renderTasks(){
+  const board=document.getElementById("tasksBoard");
+  const pf=document.getElementById("taskProjFilter").value;
+  const ef=document.getElementById("taskExpertFilter").value;
+  board.innerHTML="";
+  TASK_COLS.forEach(col=>{
+    let items=state.tasks.filter(t=>t.status===col.id);
+    if(pf==="__independent__") items=items.filter(t=>!t.project);
+    else if(pf) items=items.filter(t=>t.project===pf);
+    if(ef) items=items.filter(t=>(t.experts||[]).includes(ef));
+    const colEl=document.createElement("div"); colEl.className="column";
+    colEl.innerHTML=`<div class="col-head"><span class="col-dot" style="background:${col.color}"></span>
+      <span class="col-title">${col.title}</span><span class="col-count">${faNum(items.length)}</span></div>
+      <div class="col-body" data-col="${col.id}" data-kind="task"></div>
+      <button class="add-card" data-addtask="${col.id}">+ افزودن</button>`;
+    const body=colEl.querySelector(".col-body");
+    items.forEach(t=>{
+      const proj=projectById(t.project);
+      const prog=+t.progress||0;
+      const tp=timeProgress(t.start,t.due);
+      const card=document.createElement("div"); card.className="card"; card.draggable=true; card.dataset.id=t.id; card.dataset.kind="task";
+      card.innerHTML=`${proj?`<span class="pr-tag">${esc(proj.name)}</span>`:`<span class="pr-tag indep">وظیفهٔ مستقل</span>`}
+        <div class="ttl" style="margin-top:6px">${esc(t.title)}</div>
+        <div class="dates"><span class="lbl">سررسید:</span> ${jalali(t.due)} <span class="lbl">(${greg(t.due)})</span>${tp!==null?`<br><span class="lbl">زمان سپری‌شده:</span> ${faNum(tp)}٪`:""}</div>
+        <div class="meter"><i style="width:${prog}%;background:${col.color}"></i></div>
+        <div class="meter-row"><span>پیشرفت کار</span><span>${faNum(prog)}٪</span></div>
+        <div class="meta">${dueBadge(t.due,t.status)} ${avatarsHTML(t.experts)}</div>`;
+      card.addEventListener("click",()=>openTaskModal(t.id));
+      body.appendChild(card);
+    });
+    board.appendChild(colEl);
+  });
+  wireDnD(board);
+}
+
+/* ============ DRAG & DROP ============ */
+function wireDnD(board){
+  board.querySelectorAll(".card").forEach(card=>{
+    card.addEventListener("dragstart",e=>{card.classList.add("dragging");e.dataTransfer.setData("text/plain",JSON.stringify({id:card.dataset.id,kind:card.dataset.kind}));});
+    card.addEventListener("dragend",()=>card.classList.remove("dragging"));
+  });
+  board.querySelectorAll(".col-body").forEach(body=>{
+    body.addEventListener("dragover",e=>{e.preventDefault();body.classList.add("drag-over");});
+    body.addEventListener("dragleave",()=>body.classList.remove("drag-over"));
+    body.addEventListener("drop",e=>{
+      e.preventDefault(); body.classList.remove("drag-over");
+      let data; try{data=JSON.parse(e.dataTransfer.getData("text/plain"));}catch(_){return;}
+      const newCol=body.dataset.col;
+      if(data.kind==="task"){
+        const t=state.tasks.find(x=>x.id===data.id); if(!t)return; t.status=newCol;
+        if(newCol==="done") t.progress=100; else if(t.progress===100&&newCol!=="done") t.progress=90;
+        save(); renderTasks(); renderDashboard();
+      }else{
+        const p=state.projects.find(x=>x.id===data.id); if(!p)return; p.status=newCol;
+        save(); renderProjects(); renderDashboard();
+      }
+    });
+  });
+}
+
+/* ============ RENDER: EXPERTS ============ */
+function renderExperts(){
+  const grid=document.getElementById("expertGrid");
+  if(!state.experts.length){ grid.innerHTML='<div class="empty">هنوز کارشناسی اضافه نشده است.</div>'; return; }
+  grid.innerHTML="";
+  state.experts.forEach(e=>{
+    const tcount=state.tasks.filter(t=>(t.experts||[]).includes(e.id)).length;
+    const pcount=state.projects.filter(p=>(p.experts||[]).includes(e.id)).length;
+    const el=document.createElement("div"); el.className="expert-card";
+    el.innerHTML=`<div class="top"><span class="big-av" style="background:${e.color}">${esc(initials(e.name))}</span>
+      <div><div style="font-weight:800">${esc(e.name)}</div><div class="role">${esc(e.role||"—")}</div></div></div>
+      <div class="stats"><div><b>${faNum(pcount)}</b>پروژه</div><div><b>${faNum(tcount)}</b>وظیفه</div></div>
+      <div class="row-actions"><button class="ghost sm" data-editexp="${e.id}">ویرایش</button>
+        <button class="danger sm" data-delexp="${e.id}">حذف</button></div>`;
+    grid.appendChild(el);
+  });
+}
+
+/* ============ RENDER: DASHBOARD ============ */
+function barChart(rows){ // rows: {name,pct,color}
+  if(!rows.length) return '<div class="empty-mini">داده‌ای موجود نیست</div>';
+  return '<div class="bar-chart">'+rows.map(r=>`<div class="bar"><span class="name" title="${esc(r.name)}">${esc(r.name)}</span>
+    <div class="track"><i style="width:${r.pct}%;background:${r.color}"></i></div><span class="pct">${faNum(r.pct)}٪</span></div>`).join("")+'</div>';
+}
+function renderDashboard(){
+  /* --- Section 1: Tasks --- */
+  const tasks=state.tasks;
+  const total=tasks.length;
+  const byStatus = id => tasks.filter(t=>t.status===id).length;
+  const avgProg = total?Math.round(tasks.reduce((a,t)=>a+(+t.progress||0),0)/total):0;
+  const overdue = tasks.filter(t=>t.status!=="done"&&(daysLeft(t.due)??99)<0).length;
+  const dueSoon = tasks.filter(t=>t.status!=="done"&&(daysLeft(t.due)??99)>=0&&(daysLeft(t.due)??99)<=3).length;
+  let pieSlices="", acc=0; const pieLegend=[];
+  TASK_COLS.forEach((c,i)=>{ const cnt=byStatus(c.id); const pct=total?cnt/total*100:0;
+    pieSlices+=`${c.color} ${acc}% ${acc+pct}%,`; acc+=pct;
+    pieLegend.push(`<span><span class="dot" style="background:${c.color}"></span>${c.title}: ${faNum(cnt)}</span>`);
+  });
+  if(!total) pieSlices="var(--gray-bg) 0% 100%,";
+  document.getElementById("dashTasks").innerHTML=`
+    <h3>✅ پیشرفت وظایف</h3><div class="sub">وضعیت کلی ${faNum(total)} وظیفه (تاریخ بر اساس ساعت محلی ویندوز شما)</div>
+    <div class="stat-grid">
+      <div class="stat"><div class="lab">کل وظایف</div><div class="val">${faNum(total)}</div></div>
+      <div class="stat"><div class="lab">میانگین پیشرفت</div><div class="val">${faNum(avgProg)}٪</div></div>
+      <div class="stat"><div class="lab">دارای تأخیر</div><div class="val" style="color:var(--red)">${faNum(overdue)}</div><div class="cap">سررسید گذشته</div></div>
+      <div class="stat"><div class="lab">نزدیک سررسید</div><div class="val" style="color:var(--orange)">${faNum(dueSoon)}</div><div class="cap">۳ روز یا کمتر</div></div>
+    </div>
+    <div class="pie-wrap"><div class="pie" style="background:conic-gradient(${pieSlices.slice(0,-1)})"></div>
+      <div class="legend">${pieLegend.join("")}</div></div>`;
+
+  /* --- Section 2: Projects --- */
+  const projRows=state.projects.map((p,i)=>({name:p.name,pct:projectProgress(p.id),color:AVATAR_COLORS[i%AVATAR_COLORS.length]}));
+  const pTotal=state.projects.length;
+  const pDone=state.projects.filter(p=>p.status==="completed").length;
+  const pActive=state.projects.filter(p=>p.status==="active").length;
+  const pAvg=pTotal?Math.round(projRows.reduce((a,r)=>a+r.pct,0)/pTotal):0;
+  document.getElementById("dashProjects").innerHTML=`
+    <h3>📁 پیشرفت پروژه‌ها</h3><div class="sub">میزان تکمیل هر پروژه بر اساس میانگین پیشرفت وظایف آن</div>
+    <div class="stat-grid">
+      <div class="stat"><div class="lab">کل پروژه‌ها</div><div class="val">${faNum(pTotal)}</div></div>
+      <div class="stat"><div class="lab">در حال اجرا</div><div class="val" style="color:var(--blue)">${faNum(pActive)}</div></div>
+      <div class="stat"><div class="lab">تکمیل‌شده</div><div class="val" style="color:var(--green)">${faNum(pDone)}</div></div>
+      <div class="stat"><div class="lab">میانگین پیشرفت</div><div class="val">${faNum(pAvg)}٪</div></div>
+    </div>
+    ${barChart(projRows)}`;
+
+  /* --- Section 3: Experts --- */
+  const expRows=state.experts.map(e=>{
+    const ts=state.tasks.filter(t=>(t.experts||[]).includes(e.id));
+    const avg=ts.length?Math.round(ts.reduce((a,t)=>a+(+t.progress||0),0)/ts.length):0;
+    const open=ts.filter(t=>t.status!=="done").length;
+    return {name:e.name,color:e.color,pct:avg,tasks:ts.length,open};
+  });
+  const workload=expRows.map(r=>({name:r.name,pct:r.tasks?Math.min(100,Math.round(r.open/Math.max(1,Math.max(...expRows.map(x=>x.open),1))*100)):0,color:r.color}));
+  document.getElementById("dashExperts").innerHTML=`
+    <h3>👥 عملکرد کارشناسان</h3><div class="sub">میانگین پیشرفت وظایف و حجم کار باز هر کارشناس</div>
+    ${expRows.length?`<div class="bar-chart">${expRows.map(r=>`
+      <div class="bar"><span class="name"><span class="dot" style="display:inline-block;border-radius:50%;background:${r.color}"></span> ${esc(r.name)}</span>
+      <div class="track"><i style="width:${r.pct}%;background:${r.color}"></i></div><span class="pct">${faNum(r.pct)}٪</span></div>
+      <div style="margin-top:-4px;margin-bottom:4px;font-size:11.5px;color:var(--text-faint);padding-inline-start:2px">${faNum(r.tasks)} وظیفه (${faNum(r.open)} باز) • میانگین پیشرفت ${faNum(r.pct)}٪</div>`).join("")}</div>`
+      :'<div class="empty-mini">کارشناسی ثبت نشده است</div>'}`;
+}
+
+/* ============ MODAL ENGINE ============ */
+const modalBg=document.getElementById("modalBg");
+function closeModal(){ modalBg.classList.remove("open"); }
+document.getElementById("modalClose").addEventListener("click",closeModal);
+modalBg.addEventListener("click",e=>{ if(e.target===modalBg) closeModal(); });
+
+function chipSelector(selected){
+  if(!state.experts.length) return '<div class="empty-mini">ابتدا از تب «کارشناسان دفتر» کارشناس اضافه کنید.</div>';
+  return '<div class="chips" id="chipBox">'+state.experts.map(e=>
+    `<span class="chip ${selected.includes(e.id)?"sel":""}" data-chip="${e.id}">
+      <span class="mini-av" style="background:${e.color}">${esc(initials(e.name))}</span>${esc(e.name)}</span>`).join("")+'</div>';
+}
+function wireChips(){
+  const box=document.getElementById("chipBox"); if(!box) return;
+  box.querySelectorAll(".chip").forEach(c=>c.addEventListener("click",()=>c.classList.toggle("sel")));
+}
+function getChips(){ const box=document.getElementById("chipBox"); if(!box) return []; 
+  return [...box.querySelectorAll(".chip.sel")].map(c=>c.dataset.chip); }
+
+/* ---- Task modal ---- */
+function openTaskModal(id){
+  const t = id?state.tasks.find(x=>x.id===id):null;
+  const today=new Date().toISOString().slice(0,10);
+  document.getElementById("modalTitle").textContent = t?"ویرایش وظیفه":"وظیفه جدید";
+  const projOpts=state.projects.map(p=>`<option value="${p.id}" ${t&&t.project===p.id?"selected":""}>${esc(p.name)}</option>`).join("");
+  document.getElementById("modalBody").innerHTML=`
+    <div><label>عنوان وظیفه</label><input id="f_title" value="${t?esc(t.title):""}" placeholder="مثلاً تهیه گزارش"></div>
+    <div><label>توضیحات</label><textarea id="f_desc" placeholder="جزئیات...">${t?esc(t.desc):""}</textarea></div>
+    <div class="field-row">
+      <div><label>پروژه (اختیاری)</label><select id="f_proj"><option value="">بدون پروژه — وظیفهٔ مستقل</option>${projOpts}</select></div>
+    <div class="hint" style="margin-top:-8px">اگر پروژه‌ای انتخاب نشود، وظیفه به‌صورت «مستقل» ثبت می‌شود.</div>
+      <div><label>وضعیت</label><select id="f_status">${TASK_COLS.map(c=>`<option value="${c.id}" ${t&&t.status===c.id?"selected":""}>${c.title}</option>`).join("")}</select></div>
+    </div>
+    <div class="field-row">
+      <div><label>تاریخ شروع</label>${dateFieldHTML("start", t?t.start:today)}</div>
+      <div><label>سررسید</label>${dateFieldHTML("due", t?t.due:today)}</div>
+    </div>
+    <div><label>درصد پیشرفت کار</label><div class="range-row"><input type="range" min="0" max="100" step="5" id="f_prog" value="${t?t.progress:0}"><span class="range-val" id="progVal"></span></div></div>
+    <div><label>کارشناسان مسئول (یک یا چند نفر)</label>${chipSelector(t?(t.experts||[]):[])}</div>`;
+  const foot=document.getElementById("modalFoot");
+  foot.innerHTML=`<button id="saveBtn">${t?"ذخیره تغییرات":"افزودن وظیفه"}</button>
+    <button class="ghost" id="cancelBtn">انصراف</button>${t?`<div style="flex:1"></div><button class="danger" id="delBtn">حذف</button>`:""}`;
+  wireChips();
+  const prog=document.getElementById("f_prog"), progVal=document.getElementById("progVal");
+  const upd=()=>progVal.textContent=faNum(prog.value)+"٪"; prog.addEventListener("input",upd); upd();
+  wireDateField("start"); wireDateField("due");
+  document.getElementById("cancelBtn").addEventListener("click",closeModal);
+  document.getElementById("saveBtn").addEventListener("click",()=>{
+    const title=document.getElementById("f_title").value.trim(); if(!title){alert("عنوان وظیفه را وارد کنید");return;}
+    const obj={title,desc:document.getElementById("f_desc").value.trim(),project:document.getElementById("f_proj").value,
+      status:document.getElementById("f_status").value,start:getDateValue("start"),
+      due:getDateValue("due"),progress:+document.getElementById("f_prog").value,experts:getChips()};
+    if(obj.status==="done") obj.progress=100;
+    if(t){ Object.assign(t,obj); } else { obj.id=uid(); state.tasks.push(obj); }
+    save(); closeModal(); renderTasks(); renderDashboard(); refreshFilters();
+  });
+  if(t) document.getElementById("delBtn").addEventListener("click",()=>{
+    if(confirm("این وظیفه حذف شود؟")){ state.tasks=state.tasks.filter(x=>x.id!==t.id); save(); closeModal(); renderTasks(); renderDashboard(); }
+  });
+  modalBg.classList.add("open");
+}
+
+/* ---- Project modal ---- */
+function openProjectModal(id){
+  const p = id?state.projects.find(x=>x.id===id):null;
+  const today=new Date().toISOString().slice(0,10);
+  document.getElementById("modalTitle").textContent = p?"ویرایش پروژه":"پروژه جدید";
+  document.getElementById("modalBody").innerHTML=`
+    <div><label>نام پروژه</label><input id="f_name" value="${p?esc(p.name):""}" placeholder="نام پروژه"></div>
+    <div><label>توضیحات</label><textarea id="f_desc" placeholder="شرح پروژه...">${p?esc(p.desc):""}</textarea></div>
+    <div class="field-row">
+      <div><label>تاریخ شروع</label>${dateFieldHTML("start", p?p.start:today)}</div>
+      <div><label>تاریخ پایان</label>${dateFieldHTML("due", p?p.due:today)}</div>
+    </div>
+    <div><label>وضعیت</label><select id="f_status">${PROJ_COLS.map(c=>`<option value="${c.id}" ${p&&p.status===c.id?"selected":""}>${c.title}</option>`).join("")}</select></div>
+    <div><label>کارشناسان مسئول (یک یا چند نفر)</label>${chipSelector(p?(p.experts||[]):[])}</div>
+    ${p?`<div class="hint">پیشرفت پروژه به‌صورت خودکار از میانگین وظایف محاسبه می‌شود: <b>${faNum(projectProgress(p.id))}٪</b></div>`:""}`;
+  const foot=document.getElementById("modalFoot");
+  foot.innerHTML=`<button id="saveBtn">${p?"ذخیره تغییرات":"افزودن پروژه"}</button>
+    <button class="ghost" id="cancelBtn">انصراف</button>${p?`<div style="flex:1"></div><button class="danger" id="delBtn">حذف</button>`:""}`;
+  wireChips();
+  wireDateField("start"); wireDateField("due");
+  document.getElementById("cancelBtn").addEventListener("click",closeModal);
+  document.getElementById("saveBtn").addEventListener("click",()=>{
+    const name=document.getElementById("f_name").value.trim(); if(!name){alert("نام پروژه را وارد کنید");return;}
+    const obj={name,desc:document.getElementById("f_desc").value.trim(),status:document.getElementById("f_status").value,
+      start:getDateValue("start"),due:getDateValue("due"),experts:getChips()};
+    if(p){ Object.assign(p,obj); } else { obj.id=uid(); state.projects.push(obj); }
+    save(); closeModal(); renderProjects(); renderDashboard(); refreshFilters();
+  });
+  if(p) document.getElementById("delBtn").addEventListener("click",()=>{
+    const tc=tasksOfProject(p.id).length;
+    if(confirm(`این پروژه حذف شود؟${tc?" "+faNum(tc)+" وظیفه مرتبط بدون پروژه خواهند شد.":""}`)){
+      state.projects=state.projects.filter(x=>x.id!==p.id);
+      state.tasks.forEach(t=>{ if(t.project===p.id) t.project=""; });
+      save(); closeModal(); renderProjects(); renderTasks(); renderDashboard(); refreshFilters();
+    }
+  });
+  modalBg.classList.add("open");
+}
+
+/* ---- Expert modal ---- */
+function openExpertModal(id){
+  const e = id?state.experts.find(x=>x.id===id):null;
+  document.getElementById("modalTitle").textContent = e?"ویرایش کارشناس":"کارشناس جدید";
+  document.getElementById("modalBody").innerHTML=`
+    <div><label>نام و نام خانوادگی</label><input id="f_name" value="${e?esc(e.name):""}" placeholder="مثلاً علی رضایی"></div>
+    <div><label>سمت / تخصص</label><input id="f_role" value="${e?esc(e.role||""):""}" placeholder="کارشناس فنی"></div>
+    <div><label>رنگ پروفایل</label><div class="chips" id="colorBox">${AVATAR_COLORS.map(c=>
+      `<span class="chip ${ (e?e.color:AVATAR_COLORS[0])===c?"sel":""}" data-color="${c}" style="gap:0"><span class="mini-av" style="background:${c};width:22px;height:22px"></span></span>`).join("")}</div></div>`;
+  const foot=document.getElementById("modalFoot");
+  foot.innerHTML=`<button id="saveBtn">${e?"ذخیره":"افزودن"}</button><button class="ghost" id="cancelBtn">انصراف</button>`;
+  const colorBox=document.getElementById("colorBox");
+  colorBox.querySelectorAll(".chip").forEach(c=>c.addEventListener("click",()=>{
+    colorBox.querySelectorAll(".chip").forEach(x=>x.classList.remove("sel")); c.classList.add("sel"); }));
+  document.getElementById("cancelBtn").addEventListener("click",closeModal);
+  document.getElementById("saveBtn").addEventListener("click",()=>{
+    const name=document.getElementById("f_name").value.trim(); if(!name){alert("نام را وارد کنید");return;}
+    const sel=colorBox.querySelector(".chip.sel"); const color=sel?sel.dataset.color:AVATAR_COLORS[0];
+    const role=document.getElementById("f_role").value.trim();
+    if(e){ e.name=name; e.role=role; e.color=color; } else { state.experts.push({id:uid(),name,role,color}); }
+    save(); closeModal(); renderExperts(); renderDashboard(); refreshFilters();
+  });
+  modalBg.classList.add("open");
+}
+
+/* ============ FILTERS ============ */
+function refreshFilters(){
+  const expOpts='<option value="">همه کارشناسان</option>'+state.experts.map(e=>`<option value="${e.id}">${esc(e.name)}</option>`).join("");
+  const projOpts='<option value="">همه پروژه‌ها</option><option value="__independent__">وظایف مستقل (بدون پروژه)</option>'+state.projects.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join("");
+  const pe=document.getElementById("projExpertFilter"); const te=document.getElementById("taskExpertFilter"); const tp=document.getElementById("taskProjFilter");
+  const v1=pe.value,v2=te.value,v3=tp.value;
+  pe.innerHTML=expOpts; te.innerHTML=expOpts; tp.innerHTML=projOpts;
+  pe.value=v1; te.value=v2; tp.value=v3;
+}
+
+/* ============ TABS ============ */
+document.querySelectorAll(".tab").forEach(tab=>tab.addEventListener("click",()=>{
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+  tab.classList.add("active");
+  document.getElementById("view-"+tab.dataset.view).classList.add("active");
+  if(tab.dataset.view==="dashboard") renderDashboard();
+}));
+
+/* ============ BUTTONS ============ */
+document.getElementById("btnNewTask").addEventListener("click",()=>openTaskModal(null));
+document.getElementById("btnNewProject").addEventListener("click",()=>openProjectModal(null));
+document.getElementById("btnNewExpert").addEventListener("click",()=>openExpertModal(null));
+document.getElementById("projExpertFilter").addEventListener("change",renderProjects);
+document.getElementById("taskProjFilter").addEventListener("change",renderTasks);
+document.getElementById("taskExpertFilter").addEventListener("change",renderTasks);
+
+document.addEventListener("click",e=>{
+  const at=e.target.closest("[data-addtask]"); if(at){ openTaskModal(null); setTimeout(()=>{const s=document.getElementById("f_status"); if(s){s.value=at.dataset.addtask;}},0); }
+  const ap=e.target.closest("[data-addproj]"); if(ap){ openProjectModal(null); setTimeout(()=>{const s=document.getElementById("f_status"); if(s){s.value=ap.dataset.addproj;}},0); }
+  const ee=e.target.closest("[data-editexp]"); if(ee) openExpertModal(ee.dataset.editexp);
+  const de=e.target.closest("[data-delexp]"); if(de){ const ex=expertById(de.dataset.delexp);
+    if(confirm(`«${ex?ex.name:""}» حذف شود؟ از تمام وظایف و پروژه‌ها برداشته می‌شود.`)){
+      state.experts=state.experts.filter(x=>x.id!==de.dataset.delexp);
+      state.tasks.forEach(t=>t.experts=(t.experts||[]).filter(x=>x!==de.dataset.delexp));
+      state.projects.forEach(p=>p.experts=(p.experts||[]).filter(x=>x!==de.dataset.delexp));
+      save(); renderExperts(); renderDashboard(); refreshFilters();
+    } }
+});
+
+/* ============ IMPORT / EXPORT ============ */
+document.getElementById("btnExport").addEventListener("click",()=>{
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+  a.download="kanban-backup-"+new Date().toISOString().slice(0,10)+".json"; a.click(); URL.revokeObjectURL(a.href);
+});
+document.getElementById("btnImport").addEventListener("click",()=>document.getElementById("fileInput").click());
+document.getElementById("fileInput").addEventListener("change",e=>{
+  const f=e.target.files[0]; if(!f) return; const r=new FileReader();
+  r.onload=()=>{ try{ const d=JSON.parse(r.result);
+    if(!d.experts||!d.projects||!d.tasks){alert("فایل نامعتبر است");return;}
+    if(confirm("داده‌های فعلی با محتوای این فایل جایگزین شود؟")){ state=d; save(); renderAll(); }
+  }catch(_){ alert("خطا در خواندن فایل JSON"); } };
+  r.readAsText(f); e.target.value="";
+});
+
+/* ============ CLOCK ============ */
+function tickClock(){ const now=new Date();
+  document.getElementById("clockH").textContent=jfLong.format(now)+" — "+tf.format(now);
+  document.getElementById("clockG").textContent="میلادی: "+gf.format(now);
+}
+setInterval(tickClock,1000); tickClock();
+
+/* ============ INIT ============ */
+function renderAll(){ refreshFilters(); renderProjects(); renderTasks(); renderExperts(); renderDashboard(); }
+renderAll();
+</script>
+</body>
+</html>
